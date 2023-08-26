@@ -1,5 +1,6 @@
 import torch
 from torch.nn import AvgPool2d, Linear, Flatten, Softmax
+from torch.nn.functional import cross_entropy
 import numpy as np
 
 
@@ -31,7 +32,7 @@ class OrientationEstimationModel(torch.nn.Module):
 # Args:
 # Each feature in bucket is G=360/N apart
 # Buckets are offset (G/M)=360/(MN) apart
-def create_loss(M, N, angles, use_degrees=True):
+def create_gt(M, N, angles, use_degrees=True):
     # Create angle tensor
     _, m, n = np.ogrid[:len(angles), :M, :N]
     G = 360 / N if use_degrees else np.pi / N
@@ -41,7 +42,6 @@ def create_loss(M, N, angles, use_degrees=True):
         axis=2)
     gt_buckets = torch.tensor(np.eye(N)[i])
     return gt_buckets
-    
 
 
 if __name__ == "__main__":
@@ -49,6 +49,7 @@ if __name__ == "__main__":
     output = obj(torch.rand((48, 3, 256, 256)))
     print(output.shape)
     print(torch.mean(output))
-    print(create_loss(8, 9, np.array([40, 271])))
-
-
+    gt = create_gt(8, 9, np.array([40, 271]))
+    print(gt)
+    data = torch.zeros([2, 8, 9])
+    print(cross_entropy(data, gt))
